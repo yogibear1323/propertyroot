@@ -116,7 +116,7 @@ export default function AccountModal() {
           <div className="grid" style={{ gap: 10 }}>
             <button className="btn block" onClick={() => { setAcct(generateAccount()); setSaved(false); setRevealed(true); setStep("reveal"); }}>✦ Create a new account</button>
             <button className="btn block ghost" onClick={() => setStep("import")}>Import a secret key (S…)</button>
-            <button className="btn block ghost" disabled={w.connecting} onClick={w.connect}>{w.connecting ? "Connecting…" : "Use Freighter extension"}</button>
+            <button className="btn block ghost" disabled={w.connecting} onClick={w.connect}>{w.connecting ? "Connecting…" : "Use a browser wallet (Freighter, LOBSTR, xBull…)"}</button>
             {w.stored && <button className="btn block ghost" onClick={() => setStep("unlock")}>Unlock key saved on this device ({short(w.stored.publicKey, 4)})</button>}
             {w.error && <div className="notice warn">{w.error}</div>}
             <div className="notice" style={{ fontSize: "0.78rem" }}>On testnet, new accounts are funded automatically by Friendbot. <b>On mainnet</b> a new address does not exist on the ledger until someone sends it the minimum balance (currently 1 XLM base reserve, plus 0.5 XLM per trustline/offer) — there is no Friendbot.</div>

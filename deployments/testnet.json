@@ -15,9 +15,19 @@
   "contracts": {
     "attestationRegistry": "CB2GMNKP2DAH6TKNQOPDXXOWDJQ32DQXZOILPLW5NBXIQMZKLTT5SQTV",
     "propertyVault": "CAOFCSLRS42AJXJGIHD3A7IOGJHR6KPH2ZESR5MVLP7AIMDVIHGR72RO",
-    "blendAdapter": "CDAH3K243QBP3BAVCEPRHGVRGBBPMJXSNCQGPGQACQWZDOHNRFN3UB3L"
+    "blendAdapter": "CDAH3K243QBP3BAVCEPRHGVRGBBPMJXSNCQGPGQACQWZDOHNRFN3UB3L",
+    "valuationLog": "CCOYTGG3DOWKQT5URMCKOG326CYRTXH4H5Y36WJJ33KUQZOYIVT6Y4AR"
   },
   "propertyTokenWasmHash": "6ae24e7befc5bfeab4c3f688d9527a8d06fb73a1eca87502ac1682b6e6a29aa8",
-  "params": { "ltvBps": 5000, "maxPriceAgeSecs": 1800, "demoMode": true, "demoCapUsd": 2000000, "requireVerified": true, "initialReserveXlm": 9000 },
-  "deployedAt": "2026-10-14T01:09:58Z"
+  "params": {
+    "ltvBps": 5000,
+    "maxPriceAgeSecs": 1800,
+    "demoMode": true,
+    "demoCapUsd": 2000000,
+    "requireVerified": true,
+    "initialReserveXlm": 9000
+  },
+  "deployedAt": "2026-10-14T01:09:58Z",
+  "valuationLogNote": "record_valuation(owner, address_hash, value_usd, source[zillow|manual]) + record_tokenization; deployed 2026-10-14 testnet",
+  "valuationProxyUrl": ""
 }

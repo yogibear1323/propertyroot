@@ -6,9 +6,9 @@
  * works read-only without any signer.
  */
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { getAddress, getNetworkDetails, isConnected, requestAccess } from "@stellar/freighter-api";
 import { NETWORK_PASSPHRASE } from "./config";
-import { FreighterSigner, LocalKeySigner, type Signer } from "./signer";
+import { LocalKeySigner, type Signer } from "./signer";
+import { KitSigner, connectWallet, forgetWallet, savedWallet, type WalletOption } from "./walletKit";
 import { decryptSecret, encryptSecret, forgetStoredKey, loadStoredKey, saveStoredKey, type EncryptedKey } from "./keys";
 
 type WalletState = {
@@ -26,7 +26,12 @@ type WalletState = {
   openModal: (intent?: unknown) => void;
   modalIntent: "create" | null;
   closeModal: () => void;
+  /** Opens the wallet picker. */
   connect: () => Promise<void>;
+  pickerOpen: boolean;
+  closePicker: () => void;
+  connectWith: (w: WalletOption) => Promise<void>;
+  walletId: string | null;
   loginWithSecret: (secret: string, rememberWithPassword?: string) => Promise<void>;
   unlockStored: (password: string) => Promise<void>;
   forgetDevice: () => void;
@@ -46,6 +51,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalIntent, setModalIntent] = useState<"create" | null>(null);
   const current = useRef<Signer | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [walletId, setWalletId] = useState<string | null>(null);
 
   const replaceSigner = useCallback((s: Signer | null) => {
     if (current.current instanceof LocalKeySigner && current.current !== s) current.current.destroy();
@@ -54,38 +61,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let alive = true;
-    isConnected()
-      .then((r) => alive && setAvailable(Boolean(r.isConnected)))
-      .catch(() => alive && setAvailable(false));
-    // drop in-memory key material when the tab goes away
+    setAvailable(true);
+    const saved = savedWallet();
+    if (saved) { const k = new KitSigner(saved.address, saved.id); current.current = k; setSigner(k); setWalletId(saved.id); }
     const onUnload = () => current.current instanceof LocalKeySigner && current.current.destroy();
     window.addEventListener("pagehide", onUnload);
-    return () => {
-      alive = false;
-      window.removeEventListener("pagehide", onUnload);
-    };
+    return () => window.removeEventListener("pagehide", onUnload);
   }, []);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async () => { setError(null); setPickerOpen(true); }, []);
+
+  const connectWith = useCallback(async (w: WalletOption) => {
     setConnecting(true);
     setError(null);
     try {
-      const c = await isConnected();
-      if (!c.isConnected) {
-        setError("Freighter not detected — install it from freighter.app and switch it to TESTNET, or create an in-app account instead.");
-        return;
-      }
-      const r = await requestAccess();
-      if (r.error) throw new Error(String(r.error.message ?? r.error));
-      const a = r.address || (await getAddress()).address;
-      replaceSigner(new FreighterSigner(a, NETWORK_PASSPHRASE));
-      try {
-        const n = await getNetworkDetails();
-        setWrongNetwork(Boolean(n.networkPassphrase) && n.networkPassphrase !== NETWORK_PASSPHRASE);
-      } catch {
-        /* ignore */
-      }
+      const a = await connectWallet(w.id, { available: w.isAvailable, name: w.name, url: w.url });
+      replaceSigner(new KitSigner(a, w.id));
+      setWalletId(w.id);
+      setWrongNetwork(false);
+      setPickerOpen(false);
       setModalOpen(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -146,10 +140,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         openModal: (intent?: unknown) => { setModalIntent(intent === "create" ? "create" : null); setModalOpen(true); },
         closeModal: () => setModalOpen(false),
         connect,
+        pickerOpen,
+        closePicker: () => setPickerOpen(false),
+        connectWith,
+        walletId,
         loginWithSecret,
         unlockStored,
         forgetDevice,
-        disconnect: () => replaceSigner(null),
+        disconnect: () => { forgetWallet(); setWalletId(null); replaceSigner(null); },
         sign,
       }}
     >

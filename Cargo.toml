@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["contracts/attestation-registry", "contracts/property-token", "contracts/property-vault", "contracts/blend-adapter", "contracts/mocks", "contracts/tests"]
+members = ["contracts/attestation-registry", "contracts/property-token", "contracts/property-vault", "contracts/blend-adapter", "contracts/mocks", "contracts/valuation-log", "contracts/tests"]
 
 [workspace.package]
 version = "0.1.0"
