@@ -42,3 +42,12 @@ cargo test -p propertyroot-tests                                 # flow, revalue
 ## Logo concepts (`logo/`)
 Roots growing from the base of the Quasaria Q into a house/land outline, clay → honey with a soft glow and moss accent.
 `option-a-roots-house.svg` (used on the page), `option-b-roots-land.svg`, `option-c-house-in-roots.svg`.
+
+## Website (`app/`)
+
+Standalone Quasaria PropertyRoot site: landing page at `/` and the testnet demo app at `/app`.
+Live: https://yogibear1323.github.io/propertyroot/ (demo: https://yogibear1323.github.io/propertyroot/app).
+Vite + React, Freighter or a local testnet key, earthy theme. It reads `deployments`-equivalent config from
+`app/src/config/propertyroot-testnet.json` and talks only to Stellar testnet RPC; no dependency on the exchange.
+
+    cd app && npm ci && npm test && VITE_BASE=/propertyroot/ npm run build
