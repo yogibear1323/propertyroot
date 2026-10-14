@@ -2,6 +2,7 @@ import { Link, Route, Routes } from "react-router-dom";
 import { useWallet } from "./lib/wallet";
 import AccountModal from "./pages/AccountModal";
 import Demo from "./pages/Demo";
+import Admin from "./pages/Admin";
 import WalletPicker from "./components/WalletPicker";
 import Landing from "./pages/Landing";
 
@@ -31,7 +32,7 @@ function Header({ app }: { app?: boolean }) {
       </Link>
       <nav aria-label="Main">
         {!app && <><a href="#how">How it works</a><a href="#tech">Tech</a><a href="#faq">FAQ</a></>}
-        {app ? <Link to="/" className="pr-navlink">← Overview</Link> : <LaunchApp />}
+        {app ? <><Link to="/app/admin" className="pr-navlink">Back office</Link><Link to="/" className="pr-navlink">← Overview</Link></> : <LaunchApp />}
       </nav>
     </header>
   );
@@ -43,6 +44,7 @@ export default function App() {
     <div className="pr-shell">
       <a className="skip" href="#main">Skip to content</a>
       <Routes>
+        <Route path="/app/admin/*" element={<><Header app /><main id="main" className="pr-main"><Admin /></main></>} />
         <Route path="/app" element={<><Header app /><main id="main" className="pr-main"><Demo /></main></>} />
         <Route path="*" element={<><Header /><main id="main"><Landing /></main></>} />
       </Routes>

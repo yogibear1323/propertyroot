@@ -113,3 +113,14 @@ export function splitTokens(value: number, by: { supply?: number; price?: number
   if (supply < 1) return { error: "Price per token can't be more than the recorded value." } as const;
   return { supply, price: p / 100, remainder: (cents - supply * p) / 100 } as const;
 }
+export const readValuationNextId = () => readContract<bigint>(VL, "next_id");
+/** Read every valuation (+ tokenization) recorded on the testnet valuation log, newest first. */
+export async function readAllValuations(max = 50) {
+  const next = Number(await readValuationNextId());
+  const ids = Array.from({ length: Math.min(max, next - 1) }, (_, i) => next - 1 - i);
+  const rows = await Promise.all(ids.map(async (id) => {
+    const [v, t] = await Promise.all([readValuation(id).catch(() => null), readTokenization(id).catch(() => null)]);
+    return v ? { id, v, t: t ?? null } : null;
+  }));
+  return rows.filter(Boolean) as { id: number; v: Valuation; t: Tokenization | null }[];
+}
