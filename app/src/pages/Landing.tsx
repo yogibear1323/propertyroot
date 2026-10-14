@@ -1,3 +1,4 @@
+import ExplainerVideo from "../components/ExplainerVideo";
 import SizzleVideo from "../components/SizzleVideo";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -117,8 +118,15 @@ export default function Landing() {
         </ol>
       </Reveal>
 
+      <Reveal id="tokenization" label="How tokenization works">
+        <h2>How tokenization works</h2>
+        <p className="la-lead">Pick a token count or a price per token, sign with your own wallet, and the split is recorded on the PropertyRoot contract on Stellar testnet.</p>
+        <ExplainerVideo name="propertyroot-how-tokenization-works" title="How tokenization works on PropertyRoot (video, about 40 seconds)" testId="la-video-tokenization" />
+      </Reveal>
+
       <Reveal id="tech" label="The tech">
         <h2>Built only on Stellar</h2>
+        <ExplainerVideo name="propertyroot-under-the-hood" title="Under the hood: PropertyRoot built on Stellar (video, about 60 seconds)" testId="la-video-hood" />
         <p className="la-lead">Live numbers below are read straight from the testnet contracts and Reflector each time you load the page.</p>
         <LiveStats />
         <div className="la-tech">
