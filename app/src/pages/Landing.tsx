@@ -90,7 +90,9 @@ export default function Landing() {
         <img src={LOGO} alt="PropertyRoot logo: roots growing into a small house" className="la-logo" width={168} height={168} />
         <div className="la-hero-copy">
           <div className="kicker">Quasaria PropertyRoot · Stellar testnet</div>
+          <div className="la-badge" data-testid="la-badge">Non-custodial · Built on Stellar · Concept</div>
           <h1 id="la-h1">Your home has roots.<br /><span>Let its value grow.</span></h1>
+          <p className="la-custody" data-testid="la-custody">PropertyRoot is a non-custodial Stellar concept. Your keys and tokens stay in your wallet; we never hold your funds. Testnet demo only.</p>
           <p>PropertyRoot puts the value of a home or land to work on Stellar. Tokenize the appraised value, supply it to Blend lending, and watch interest compound, all in a few clicks on testnet.</p>
           <div className="la-ctas"><LaunchApp big /><Link to="/app" className="la-ghost">Try the testnet demo</Link></div>
           <p className="la-fine">Demo only · unaudited · not legal title</p>

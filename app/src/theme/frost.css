@@ -161,3 +161,14 @@ html.frost .wb-yeti-photo { position: absolute; left: max(-40px, -3vw); bottom: 
 .la-sizzle-sound { position: absolute; right: 14px; bottom: 14px; padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px;
   color: #eaf1fa; background: rgba(12, 22, 44, 0.78); border: 1px solid rgba(170, 195, 225, 0.5); cursor: pointer; backdrop-filter: blur(6px); }
 .la-sizzle-sound:hover, .la-sizzle-sound:focus-visible { background: rgba(30, 52, 92, 0.9); outline: 2px solid #9fcaf0; outline-offset: 2px; }
+
+/* Non-custodial badge + statement (hero) */
+html.frost .la-badge { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 14px; padding: 8px 16px; border-radius: 999px;
+  font-size: 15px; font-weight: 650; letter-spacing: 0.02em; color: #eef4fc; background: linear-gradient(135deg, rgba(40, 70, 120, 0.85), rgba(18, 32, 62, 0.9));
+  border: 1px solid rgba(190, 215, 245, 0.6); box-shadow: 0 0 18px rgba(130, 190, 250, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+html.frost .la-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #bfe0ff; box-shadow: 0 0 8px #9fd0ff; }
+html.frost .la-hero p.la-custody { margin: 10px 0 14px; font-size: 16px; line-height: 1.5; font-weight: 550; color: #e6eef9; max-width: 46ch; }
+@media (max-width: 480px) {
+  html.frost .la-badge { font-size: 13px; padding: 7px 12px; white-space: normal; text-align: left; }
+  html.frost .la-hero p.la-custody { font-size: 15px; }
+}
