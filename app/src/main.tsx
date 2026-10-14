@@ -4,6 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import "./theme/global.css";
 import "./theme/earth.css";
 import App from "./App";
+import FrostBackdrop from "./components/FrostBackdrop";
+// Frost theme (dark navy, snowy mountains), after every other stylesheet.
+import "./theme/frost-auto.css";
+import "./theme/frost.css";
 import { WalletProvider } from "./lib/wallet";
 
 // GitHub Pages 404 fallback: /propertyroot/#/app style links → real route.
@@ -15,6 +19,7 @@ import { WalletProvider } from "./lib/wallet";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <FrostBackdrop />
     <WalletProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}>
         <App />
