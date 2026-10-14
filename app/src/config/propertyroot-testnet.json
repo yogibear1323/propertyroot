@@ -30,5 +30,6 @@
   },
   "deployedAt": "2026-10-14T01:09:58Z",
   "valuationLogNote": "valuationLog v2: record_valuation(owner, address_hash, value_usd, source[rentcast|zillow|manual], response_hash) + record_tokenization. valuationLogLegacy (v1, zillow|manual, no response_hash) kept read-only.",
-  "valuationProxyUrl": ""
+  "valuationProxyUrl": "https://propertyroot-valuation-proxy.delightful-raft.workers.dev",
+  "valuationProxyNote": "Temporary Cloudflare preview account; expires ~2026-10-14T04:46Z unless claimed. Redeploy and update this URL after claiming."
 }
