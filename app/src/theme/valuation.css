@@ -45,3 +45,5 @@
 .vf input{display:block;margin-top:4px;background:hsla(222,42%,9%,.86);color:#eef4ff;border:1px solid hsla(208,45%,72%,.35);border-radius:9px;padding:9px 11px;font:inherit;box-sizing:border-box}
 .vf input:focus{outline:2px solid rgba(170,210,255,.55);outline-offset:1px}
 .vf-base .vf-pill{width:max-content}
+.vf-pill.rentcast{border-color:rgba(120,200,255,.5);color:#bfe4ff}
+.vf-key small{flex-basis:100%}
