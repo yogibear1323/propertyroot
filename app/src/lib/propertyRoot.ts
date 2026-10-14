@@ -85,16 +85,19 @@ export const STORE_KEY = "propertyroot.demo.v1";
 export const WAITLIST_KEY = "propertyroot.waitlist.v1";
 
 // ---- Valuation log (record_valuation / record_tokenization) ----
-export type Valuation = { owner: string; address_hash: Uint8Array; value_usd: bigint; source: string; timestamp: bigint };
+export type Valuation = { owner: string; address_hash: Uint8Array; value_usd: bigint; source: string; response_hash?: Uint8Array; timestamp: bigint };
 export type Tokenization = { valuation_id: bigint; supply: bigint; price_usd: bigint; timestamp: bigint };
 const VL = (dep.contracts as Record<string, string>).valuationLog;
 export const VALUATION_LOG_ID = VL;
-export const recordValuation = (owner: string, sign: Sign, addressHashHex: string, valueUsd: number, source: "zillow" | "manual") =>
-  invokeContract(owner, sign, VL, "record_valuation", [addr(owner), bytes32(addressHashHex), usd7(valueUsd), nativeToScVal(source, { type: "symbol" })]);
+const VL_OLD = (dep.contracts as Record<string, string>).valuationLogLegacy;
+export const VALUATION_LOG_LEGACY_ID = VL_OLD;
+const ZERO32 = "0".repeat(64);
+export const recordValuation = (owner: string, sign: Sign, addressHashHex: string, valueUsd: number, source: "rentcast" | "manual", responseHashHex = ZERO32) =>
+  invokeContract(owner, sign, VL, "record_valuation", [addr(owner), bytes32(addressHashHex), usd7(valueUsd), nativeToScVal(source, { type: "symbol" }), bytes32(responseHashHex)]);
 export const recordTokenization = (owner: string, sign: Sign, valuationId: number, supply: number, priceUsd: number) =>
   invokeContract(owner, sign, VL, "record_tokenization", [addr(owner), u64(valuationId), i128(BigInt(supply)), usd7(priceUsd)]);
-export const readValuation = (id: number) => readContract<Valuation>(VL, "get", [u64(id)]);
-export const readTokenization = (id: number) => readContract<Tokenization | null>(VL, "tokenization", [u64(id)]);
+export const readValuation = (id: number, c = VL) => readContract<Valuation>(c, "get", [u64(id)]);
+export const readTokenization = (id: number, c = VL) => readContract<Tokenization | null>(c, "tokenization", [u64(id)]);
 export const usdFrom7 = (v: bigint) => Number(v) / STROOP;
 
 /** Split a value into whole tokens. Give either `supply` or `price` (USD, cents precision). */
@@ -113,14 +116,18 @@ export function splitTokens(value: number, by: { supply?: number; price?: number
   if (supply < 1) return { error: "Price per token can't be more than the recorded value." } as const;
   return { supply, price: p / 100, remainder: (cents - supply * p) / 100 } as const;
 }
-export const readValuationNextId = () => readContract<bigint>(VL, "next_id");
-/** Read every valuation (+ tokenization) recorded on the testnet valuation log, newest first. */
-export async function readAllValuations(max = 50) {
-  const next = Number(await readValuationNextId());
-  const ids = Array.from({ length: Math.min(max, next - 1) }, (_, i) => next - 1 - i);
+export const readValuationNextId = (c = VL) => readContract<bigint>(c, "next_id");
+async function readLog(c: string, legacy: boolean, max: number) {
+  const next = Number(await readValuationNextId(c));
+  const ids = Array.from({ length: Math.max(0, Math.min(max, next - 1)) }, (_, i) => next - 1 - i);
   const rows = await Promise.all(ids.map(async (id) => {
-    const [v, t] = await Promise.all([readValuation(id).catch(() => null), readTokenization(id).catch(() => null)]);
-    return v ? { id, v, t: t ?? null } : null;
+    const [v, t] = await Promise.all([readValuation(id, c).catch(() => null), readTokenization(id, c).catch(() => null)]);
+    return v ? { id, v, t: t ?? null, legacy } : null;
   }));
-  return rows.filter(Boolean) as { id: number; v: Valuation; t: Tokenization | null }[];
+  return rows.filter(Boolean) as { id: number; v: Valuation; t: Tokenization | null; legacy: boolean }[];
+}
+/** Every valuation (+ tokenization) on the current log, then the read-only legacy (v1) log; newest first. */
+export async function readAllValuations(max = 50) {
+  const [cur, old] = await Promise.all([readLog(VL, false, max), VL_OLD ? readLog(VL_OLD, true, max).catch(() => []) : Promise.resolve([])]);
+  return [...cur, ...old];
 }

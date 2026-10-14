@@ -1,30 +1,32 @@
-# PropertyRoot valuation proxy (Zillow Zestimate via Bridge)
+# PropertyRoot valuation proxy (RentCast AVM)
 
-Zillow's old public API (GetZestimate / GetSearchResults / GetDeepSearchResults) is retired.
-Zestimates are now licensed through **Bridge Interactive** (Zillow Group data) and need an
-approved application and an access token.
+The demo's "Get RentCast estimate" button uses RentCast's value estimate API:
+`GET https://api.rentcast.io/v1/avm/value?address=Street, City, State, Zip` with header `X-Api-Key`.
+Response fields used: `price`, `priceRangeLow`, `priceRangeHigh`, `comparables` (count), `subjectProperty.formattedAddress`.
+Docs: https://developers.rentcast.io/reference/value-estimate
 
-Endpoint used: `GET https://api.bridgedataoutput.com/api/v2/zestimates_v2/zestimates?access_token=…&address="…"`
-(also supports `zpid.in=` and `apn=`). Docs: https://bridgedataoutput.com/docs/platform/API/zg-data
+This Worker keeps the key server-side and exposes one route to the static site:
+`GET /avm/value?address=...` → RentCast's JSON, unchanged (the app stores sha256 of it on chain).
 
-This Worker keeps the token server-side and exposes one route to the static site:
-
-`GET /zestimate?address=123 Main St, Phoenix, AZ` → `{ value, low, high, date, zpid, matchedAddress }`
+- **CORS**: only `ALLOWED_ORIGINS` (default `https://yogibear1323.github.io`); other origins get 403.
+- **Cache**: successful lookups are cached per normalized address for `CACHE_TTL` (30 days) via the Cache API, to save the free plan's 50 requests/month. `x-cache: HIT|MISS` shows which.
+- **Own key pass-through**: a request header `X-RentCast-Key` is used instead of the secret (not cached, never logged). The app normally calls RentCast directly with a user's own key, since RentCast allows CORS (`Access-Control-Allow-Origin: *`, `X-Api-Key` allowed).
 
 | status | meaning | app shows |
 |---|---|---|
-| 200 | estimate found | Zestimate, range, date |
-| 404 | no Zestimate for the address | "Address not found" + manual entry |
-| 429 | rate limited | "Rate limited" |
-| 503 | `BRIDGE_TOKEN` missing / rejected | "Zillow estimate not connected yet" + manual entry |
-| 502 | Bridge error / unreachable | "Lookup failed" |
+| 200 | estimate | price, low–high range, comparables count |
+| 404 | address not found | "Address not found (404)" + manual entry |
+| 401 | key rejected | "Bad API key (401)" |
+| 429 | quota / rate limit | "Quota reached (429)" |
+| 503 | no key on the Worker | "RentCast not connected yet" + own key / manual entry |
+| 502 | RentCast error or unreachable | "Lookup failed" |
 
 ## Switch it on
-1. Apply for Zestimate access: register at https://bridgedataoutput.com/zgdata and request the Zestimates dataset (Zillow reviews and approves; commercial use, Zillow Data Terms apply: https://bridgedataoutput.com/zillowterms).
-2. Copy the **Server Token / access_token** from the Bridge dashboard.
-3. Deploy: `cd proxy && npx wrangler login && npx wrangler secret put BRIDGE_TOKEN && npx wrangler deploy`.
-4. Put the Worker URL (e.g. `https://propertyroot-valuation-proxy.<you>.workers.dev`) in `app/src/config/propertyroot-testnet.json` → `valuationProxyUrl` (or a `VITE_VALUATION_PROXY_URL` build var) and merge; Pages redeploys.
+1. Sign up at https://app.rentcast.io and choose the free **Developer** API plan (50 requests/month).
+2. Create an API key at https://app.rentcast.io/app/api.
+3. `cd proxy && npx wrangler login && npx wrangler secret put RENTCAST_API_KEY` (paste the key when asked).
+4. `npx wrangler deploy` → note the URL, e.g. `https://propertyroot-valuation-proxy.<account>.workers.dev`.
+5. Set `valuationProxyUrl` in `app/src/config/propertyroot-testnet.json` to that URL and merge a PR; Pages redeploys.
 
-The URL isn't secret; the token is. Never put the token in the app or this repo.
-
-Local test: `npx wrangler dev` then `curl 'http://localhost:8787/zestimate?address=...'`.
+The URL isn't secret; the key is. Never put it in the app or this repo.
+Local test: `npx wrangler dev` then `curl -H 'Origin: https://yogibear1323.github.io' 'http://localhost:8787/avm/value?address=5500 Grand Lake Dr, San Antonio, TX, 78244'`.

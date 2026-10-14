@@ -8,10 +8,11 @@ import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useWallet } from "../lib/wallet";
 import { fmtUsd, readAllValuations, readReserve, readXlmPrice, usdFrom7, VALUATION_LOG_ID, PR, type Tokenization, type Valuation } from "../lib/propertyRoot";
 import { readBlendXlmRate } from "../lib/blendRate";
-import { zillow } from "../lib/valuation";
+import { rentcast, ownKey, proxyConfigured } from "../lib/valuation";
+import { OwnKeyBox } from "./Valuation";
 import { HORIZON_URL } from "../lib/config";
 
-type Row = { id: number; v: Valuation; t: Tokenization | null };
+type Row = { id: number; v: Valuation; t: Tokenization | null; legacy?: boolean };
 const short = (a: string, n = 5) => `${a.slice(0, n)}…${a.slice(-4)}`;
 const xp = (kind: "tx" | "contract" | "account", id: string) => `https://stellar.expert/explorer/testnet/${kind}/${id}`;
 const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -63,7 +64,7 @@ function Dashboard({ q }: { q: ReturnType<typeof useValuations> }) {
   const mine = w.address ? rows.filter((r) => r.v.owner === w.address).length : 0;
   return <div className="bo-grid">
     <Card title="Recorded valuations"><b className="bo-kpi mono">{q.rows ? rows.length : "…"}</b><small>{w.address ? `${mine} from your wallet` : "connect a wallet to see yours"}</small></Card>
-    <Card title="Total recorded value"><b className="bo-kpi mono">{fmtUsd(total)}</b><small>{rows.filter((r) => String(r.v.source) === "zillow").length} zillow · {rows.filter((r) => String(r.v.source) === "manual").length} manual</small></Card>
+    <Card title="Total recorded value"><b className="bo-kpi mono">{fmtUsd(total)}</b><small>{rows.filter((r) => String(r.v.source) === "rentcast").length} rentcast · {rows.filter((r) => String(r.v.source) === "zillow").length} zillow (legacy) · {rows.filter((r) => String(r.v.source) === "manual").length} manual</small></Card>
     <Card title="Live compounding (estimate)"><b className="bo-kpi mono">{fmtUsd(liveTotal, 2)}</b><small>{rate.label} · testnet demo</small></Card>
     <Card title="Tokenized"><b className="bo-kpi mono">{rows.filter((r) => r.t).length}</b><small>valuations with a recorded split</small></Card>
     <Card title="XLM/USD (Reflector)"><b className="bo-kpi mono">{feed.px ? `$${feed.px.toFixed(4)}` : "—"}</b></Card>
@@ -80,9 +81,9 @@ function Registry({ q }: { q: ReturnType<typeof useValuations> }) {
       <label><input type="checkbox" checked={onlyMine} disabled={!w.address} onChange={(e) => setOnlyMine(e.target.checked)} /> Only my wallet</label>
       <button className="pr-btn ghost sm" onClick={q.load}>Refresh</button></div>
     {!q.rows ? <Empty>Reading from testnet…</Empty> : !rows.length ? <Empty>No valuations recorded yet. Use “Administer on chain” in the demo.</Empty> :
-      <div className="bo-table-wrap"><table className="bo-table"><thead><tr><th>#</th><th>Value</th><th>Source</th><th>Address hash</th><th>Owner</th><th>Recorded</th></tr></thead><tbody>
-        {rows.map((r) => <tr key={r.id}><td>{r.id}</td><td className="mono">{fmtUsd(usdFrom7(r.v.value_usd))}</td><td><span className={`vf-pill ${String(r.v.source)}`}>{String(r.v.source)}</span></td>
-          <td className="mono">{hex(r.v.address_hash).slice(0, 12)}…</td><td><a className="mono" href={xp("account", r.v.owner)} target="_blank" rel="noreferrer">{short(r.v.owner)}</a></td>
+      <div className="bo-table-wrap"><table className="bo-table"><thead><tr><th>#</th><th>Value</th><th>Source</th><th>Address hash</th><th>Response hash</th><th>Owner</th><th>Recorded</th></tr></thead><tbody>
+        {rows.map((r) => <tr key={`${r.legacy}-${r.id}`}><td>{r.legacy ? `v1·${r.id}` : r.id}</td><td className="mono">{fmtUsd(usdFrom7(r.v.value_usd))}</td><td><span className={`vf-pill ${String(r.v.source)}`}>{String(r.v.source)}</span></td>
+          <td className="mono">{hex(r.v.address_hash).slice(0, 12)}…</td><td className="mono">{r.v.response_hash && /[1-9a-f]/.test(hex(r.v.response_hash)) ? `${hex(r.v.response_hash).slice(0, 12)}…` : "—"}</td><td><a className="mono" href={xp("account", r.v.owner)} target="_blank" rel="noreferrer">{short(r.v.owner)}</a></td>
           <td>{new Date(Number(r.v.timestamp) * 1000).toLocaleString()}</td></tr>)}
       </tbody></table></div>}
   </Card>;
@@ -112,7 +113,7 @@ function Tokens({ q }: { q: ReturnType<typeof useValuations> }) {
     {!q.rows ? <Empty>Reading from testnet…</Empty> : !rows.length ? <Empty>No tokenizations recorded yet. Use “Continue to tokenize” after administering a value.</Empty> :
       <div className="bo-table-wrap"><table className="bo-table"><thead><tr><th>#</th><th>Supply</th><th>Price / token</th><th>Live value / token</th><th>Tokenized total</th></tr></thead><tbody>
         {rows.map((r) => { const P = usdFrom7(r.v.value_usd), price = usdFrom7(r.t!.price_usd), bal = live(P, Number(r.v.timestamp), rate.apr, now);
-          return <tr key={r.id}><td>{r.id}</td><td className="mono">{Number(r.t!.supply).toLocaleString()}</td><td className="mono">{fmtUsd(price, 2)}</td><td className="mono">{fmtUsd(price * bal / P, 6)}</td><td className="mono">{fmtUsd(price * Number(r.t!.supply), 2)}</td></tr>; })}
+          return <tr key={`${r.legacy}-${r.id}`}><td>{r.legacy ? `v1·${r.id}` : r.id}</td><td className="mono">{Number(r.t!.supply).toLocaleString()}</td><td className="mono">{fmtUsd(price, 2)}</td><td className="mono">{fmtUsd(price * bal / P, 6)}</td><td className="mono">{fmtUsd(price * Number(r.t!.supply), 2)}</td></tr>; })}
       </tbody></table><p className="bo-empty">Live value is an estimate ({rate.label}, continuous), testnet demo.</p></div>}
   </Card>;
 }
@@ -130,10 +131,12 @@ function Wallets() {
 
 function Settings() {
   const [rm, setRm] = useState(reduced());
+  const [, bump] = useState(0);
   useEffect(() => { const m = matchMedia("(prefers-reduced-motion: reduce)"); const f = () => setRm(m.matches); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
   return <Card title="Settings" wide><dl className="bo-dl">
     <div><dt>Network</dt><dd><span className="vf-pill">testnet</span> {PR.networkPassphrase}</dd></div>
-    <div><dt>Zillow proxy</dt><dd>{zillow.configured() ? <span className="vf-pill zillow">configured</span> : <span className="vf-pill off">not connected yet</span>} {zillow.configured() ? "" : "add a Bridge token to the Worker and set valuationProxyUrl"}</dd></div>
+    <div><dt>RentCast</dt><dd>{rentcast.configured() ? <span className="vf-pill rentcast">connected</span> : <span className="vf-pill off">RentCast not connected yet</span>} proxy: {proxyConfigured() ? "configured" : "not set (add RENTCAST_API_KEY to the Worker and set valuationProxyUrl)"} · own key: {ownKey.get() ? "set for this tab" : "none"}
+      <OwnKeyBox onChange={() => bump((x) => x + 1)} /></dd></div>
     <div><dt>Reduced motion</dt><dd>{rm ? "On (system setting): tickers update every 5 s, no glow or snow." : "Off: follows your system setting."}</dd></div>
     <div><dt>Contracts</dt><dd className="mono">{Object.entries({ ...PR.contracts }).map(([k, v]) => <div key={k}>{k}: <a href={xp("contract", v as string)} target="_blank" rel="noreferrer">{short(v as string, 6)}</a></div>)}</dd></div>
   </dl></Card>;

@@ -1,47 +1,46 @@
-// PropertyRoot valuation proxy — Cloudflare Worker.
-// Holds the Bridge (Zillow Group data) access token server-side; the static site never sees it.
-// GET /zestimate?address=...  ->  { value, low, high, date, zpid, matchedAddress }
-// Errors: 400 bad input, 404 no estimate, 429 rate limited, 503 not configured, 502 upstream.
-const BRIDGE = "https://api.bridgedataoutput.com/api/v2/zestimates_v2/zestimates";
+// PropertyRoot valuation proxy — Cloudflare Worker for the RentCast AVM.
+// Holds RENTCAST_API_KEY as a Worker secret; the static site never sees it.
+//   GET /avm/value?address=Street, City, State, Zip  ->  RentCast's JSON body, unchanged (so the app can hash it)
+// Optional pass-through: a request header X-RentCast-Key is forwarded as X-Api-Key instead of the secret.
+// (The app calls RentCast directly with a user's own key since RentCast allows CORS; this is a fallback.)
+// Keys and headers are never logged. Successful responses are cached per normalized address
+// (Cache API, CACHE_TTL seconds, default 30 days) to save the free plan's 50 calls/month.
+const RENTCAST = "https://api.rentcast.io/v1/avm/value";
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const origin = req.headers.get("origin") || "";
-    const allowed = (env.ALLOWED_ORIGINS || "https://yogibear1323.github.io").split(",").map((s) => s.trim());
-    const cors = { "access-control-allow-origin": allowed.includes(origin) ? origin : allowed[0], "access-control-allow-methods": "GET,OPTIONS", vary: "origin", "content-type": "application/json" };
-    const out = (status, body) => new Response(JSON.stringify(body), { status, headers: cors });
-    if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+    const allowed = (env.ALLOWED_ORIGINS || "https://yogibear1323.github.io").split(",").map((s) => s.trim()).filter(Boolean);
+    const ok = allowed.includes(origin);
+    const cors = { "access-control-allow-origin": ok ? origin : allowed[0], "access-control-allow-methods": "GET,OPTIONS", "access-control-allow-headers": "x-rentcast-key", vary: "origin" };
+    const out = (status, body, extra = {}) => new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json", ...extra } });
+    if (req.method === "OPTIONS") return new Response(null, { status: ok ? 204 : 403, headers: cors });
+    if (origin && !ok) return out(403, { error: "origin_not_allowed" });
     const url = new URL(req.url);
-    if (url.pathname !== "/zestimate" || req.method !== "GET") return out(404, { error: "not_found" });
-    if (!env.BRIDGE_TOKEN) return out(503, { error: "not_configured" });
+    if (url.pathname !== "/avm/value" || req.method !== "GET") return out(404, { error: "not_found" });
+    const userKey = req.headers.get("x-rentcast-key") || "";
+    const key = userKey || env.RENTCAST_API_KEY;
+    if (!key) return out(503, { error: "not_configured" });
     const address = (url.searchParams.get("address") || "").trim();
     if (address.length < 5 || address.length > 200) return out(400, { error: "bad_address" });
 
-    // Optional per-IP rate limit via a Workers Rate Limiting binding named RATE_LIMITER.
-    if (env.RATE_LIMITER) {
-      const { success } = await env.RATE_LIMITER.limit({ key: req.headers.get("cf-connecting-ip") || "anon" });
-      if (!success) return out(429, { error: "rate_limited" });
-    }
+    const norm = address.toLowerCase().replace(/[.,#]/g, " ").replace(/\s+/g, " ").trim();
+    const cacheKey = new Request(`https://cache.propertyroot.invalid/avm/value?a=${encodeURIComponent(norm)}`);
+    const cache = caches.default;
+    if (!userKey) { const hit = await cache.match(cacheKey); if (hit) return out(200, await hit.text(), { "x-cache": "HIT" }); }
 
-    const q = new URL(BRIDGE);
-    q.searchParams.set("access_token", env.BRIDGE_TOKEN);
-    q.searchParams.set("address", `"${address.replace(/"/g, "")}"`);
-    q.searchParams.set("limit", "1");
+    const q = new URL(RENTCAST); q.searchParams.set("address", address);
     let r;
-    try { r = await fetch(q, { headers: { accept: "application/json" } }); } catch { return out(502, { error: "upstream_unreachable" }); }
-    if (r.status === 429) return out(429, { error: "rate_limited" });
-    if (r.status === 401 || r.status === 403) return out(503, { error: "not_configured", detail: "token rejected or dataset not approved" });
+    try { r = await fetch(q, { headers: { accept: "application/json", "X-Api-Key": key } }); } catch { return out(502, { error: "upstream_unreachable" }); }
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) return out(401, { error: "bad_key" });
+    if (r.status === 429) return out(429, { error: "quota" });
+    if (r.status === 404) return out(404, { error: "address_not_found" });
     if (!r.ok) return out(502, { error: "upstream", status: r.status });
-    const j = await r.json().catch(() => null);
-    const z = j && Array.isArray(j.bundle) ? j.bundle[0] : null;
-    if (!z || !(Number(z.zestimate) > 0)) return out(404, { error: "no_estimate" });
-    return out(200, {
-      value: Number(z.zestimate),
-      low: Number(z.lowPercent) && Number(z.zestimate) ? Math.round(z.zestimate * (1 - z.lowPercent / 100)) : z.lowZestimate ?? undefined,
-      high: Number(z.highPercent) && Number(z.zestimate) ? Math.round(z.zestimate * (1 + z.highPercent / 100)) : z.highZestimate ?? undefined,
-      date: z.timestamp || z.date || undefined,
-      zpid: z.zpid ? String(z.zpid) : undefined,
-      matchedAddress: z.address || undefined,
-    });
+    if (!userKey) {
+      const ttl = Number(env.CACHE_TTL || 2592000);
+      ctx.waitUntil(cache.put(cacheKey, new Response(text, { headers: { "cache-control": `max-age=${ttl}` } })));
+    }
+    return out(200, text, { "x-cache": "MISS" });
   },
 };

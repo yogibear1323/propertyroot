@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWallet } from "../lib/wallet";
 import { fmtUsd, readTokenization, readValuation, recordTokenization, recordValuation, sha256Hex, splitTokens, usdFrom7, VALUATION_LOG_ID, type Tokenization, type Valuation } from "../lib/propertyRoot";
-import { normalizeAddress, suggestAddresses, ValuationError, zillow, type Estimate } from "../lib/valuation";
+import { normalizeAddress, suggestAddresses, ValuationError, rentcast, ownKey, type Estimate } from "../lib/valuation";
 import { readBlendXlmRate } from "../lib/blendRate";
 
 const KEY = "propertyroot.valuation.v1";
@@ -13,7 +13,7 @@ const DEMO_APR = 0.03;
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const txLink = (h: string) => `https://stellar.expert/explorer/testnet/tx/${h}`;
 type Tx = { state: "idle" | "pending" | "ok" | "err"; hash?: string; text?: string };
-type Base = { value: number; source: "zillow" | "manual"; est?: Estimate };
+type Base = { value: number; source: "rentcast" | "manual"; est?: Estimate };
 
 export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value: number; address: string; hash: string }) => void }) {
   const w = useWallet();
@@ -28,7 +28,8 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
   const [tok, setTok] = useState<Tokenization | null>(null);
   const [readErr, setReadErr] = useState<string | null>(null);
   const [splitOpen, setSplitOpen] = useState(false);
-  const configured = zillow.configured();
+  const [, bump] = useState(0);
+  const configured = rentcast.configured();
 
   // Autocomplete (debounced)
   useEffect(() => {
@@ -50,9 +51,9 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
 
   const lookup = async () => {
     setBase(null); setTx({ state: "idle" });
-    if (!configured) { setLook({ state: "err", err: new ValuationError("not-configured", "Zillow estimate not connected yet.") }); return; }
+    if (!configured) { setLook({ state: "err", err: new ValuationError("not-configured", "RentCast not connected yet.") }); return; }
     setLook({ state: "loading" });
-    try { const est = await zillow.estimate(address); setBase({ value: est.value, source: "zillow", est }); setLook({ state: "done" }); }
+    try { const est = await rentcast.estimate(address); setBase({ value: est.value, source: "rentcast", est }); setLook({ state: "done" }); }
     catch (e) { setLook({ state: "err", err: e instanceof ValuationError ? e : new ValuationError("network", String(e)) }); }
   };
   const useManual = () => {
@@ -67,7 +68,7 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
     setTx({ state: "pending" });
     try {
       const hash = await sha256Hex(normalizeAddress(address));
-      const r = await recordValuation(w.address, w.sign, hash, base.value, base.source);
+      const r = await recordValuation(w.address, w.sign, hash, base.value, base.source, base.est?.responseHash);
       const id = Number(r.result);
       localStorage.setItem(KEY, JSON.stringify({ id }));
       setVid(id);
@@ -80,8 +81,8 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
   };
 
   const errCopy = look.err && {
-    "not-configured": "The Zestimate lookup needs a Bridge API token on the proxy. For this demo, enter a value manually; it is labelled manual on chain.",
-    "not-found": look.err.message, "rate-limited": look.err.message, network: look.err.message, upstream: look.err.message,
+    "not-configured": "Add your own RentCast key below, or connect the proxy. For this demo you can also enter a value manually; it is labelled manual on chain.",
+    "not-found": look.err.message, "bad-key": look.err.message, quota: look.err.message, network: look.err.message, upstream: look.err.message,
   }[look.err.kind];
 
   return (
@@ -92,13 +93,14 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
             onChange={(e) => setAddress(e.target.value)} onKeyDown={(e) => e.key === "Enter" && address.trim().length >= 5 && lookup()} />
           <datalist id="vf-sugs">{sugs.map((s) => <option key={s} value={s} />)}</datalist>
         </label>
-        <button className="pr-btn" disabled={address.trim().length < 5 || look.state === "loading"} onClick={lookup}>{look.state === "loading" ? "Looking up…" : "Get Zillow estimate"}</button>
+        <button className="pr-btn" disabled={address.trim().length < 5 || look.state === "loading"} onClick={lookup}>{look.state === "loading" ? "Looking up…" : "Get RentCast estimate"}</button>
       </div>
-      {!configured && look.state === "idle" && <p className="vf-note"><span className="vf-pill off">Zillow estimate not connected yet</span> The Zestimate lookup switches on once a Bridge API token is added to the proxy.</p>}
+      {!configured && look.state === "idle" && <p className="vf-note"><span className="vf-pill off">RentCast not connected yet</span> Add your own RentCast key, or the lookup switches on once the proxy has a key.</p>}
+      <OwnKeyBox onChange={() => bump((x) => x + 1)} />
 
       {look.state === "err" && (
         <div className={`vf-card ${look.err?.kind === "not-configured" ? "off" : "err"}`} role="status" data-testid={`vf-${look.err?.kind}`}>
-          <b>{look.err?.kind === "not-configured" ? "Zillow estimate not connected yet" : look.err?.kind === "not-found" ? "Address not found" : look.err?.kind === "rate-limited" ? "Rate limited" : "Lookup failed"}</b>
+          <b>{({ "not-configured": "RentCast not connected yet", "not-found": "Address not found (404)", "bad-key": "Bad API key (401)", quota: "Quota reached (429)", network: "Network error", upstream: "Lookup failed" } as const)[look.err?.kind ?? "upstream"]}</b>
           <p>{errCopy}</p>
           <div className="vf-row">
             <label>Manual value (USD, demo)<input inputMode="decimal" placeholder="e.g. 450000" value={manual} onChange={(e) => setManual(e.target.value)} /></label>
@@ -110,14 +112,14 @@ export default function ValuationFlow({ onRecorded }: { onRecorded?: (v: { value
       {base && (
         <div className="vf-card ok">
           <div className="vf-base">
-            <span className={`vf-pill ${base.source}`}>{base.source === "zillow" ? "Zillow Zestimate" : "Manual value (demo)"}</span>
+            <span className={`vf-pill ${base.source}`}>{base.source === "rentcast" ? "RentCast estimate" : "Manual value (demo)"}</span>
             <b className="mono vf-big">{fmtUsd(base.value)}</b>
             {base.est?.low && base.est?.high && <small>Range {fmtUsd(base.est.low)} – {fmtUsd(base.est.high)}</small>}
-            {base.est?.date && <small>As of {base.est.date}</small>}
+                        {base.est?.comps !== undefined && <small>{base.est.comps} comparable{base.est.comps === 1 ? "" : "s"} · via {base.est.via === "own-key" ? "your key" : "proxy"}</small>}
             {base.est?.matchedAddress && <small>Matched: {base.est.matchedAddress}</small>}
           </div>
           {tx.state !== "ok" && <button className="pr-btn" disabled={tx.state === "pending"} onClick={administer}>{tx.state === "pending" ? "Waiting for wallet / testnet…" : w.address ? "Administer on chain" : "Connect wallet to administer"}</button>}
-          <p className="muted vf-small">Records sha256(address), the value and source <code>{base.source}</code> on the testnet valuation log <code>{VALUATION_LOG_ID.slice(0, 6)}…</code>. Your plain address is never stored on chain.</p>
+          <p className="muted vf-small">Records sha256(address), the value, source <code>{base.source}</code>{base.est ? " and sha256 of the RentCast response" : ""} on the testnet valuation log <code>{VALUATION_LOG_ID.slice(0, 6)}…</code>. Your plain address is never stored on chain.</p>
           {tx.state === "pending" && <p className="pr-msg" role="status">Pending: confirm in your wallet, then the transaction is submitted to Stellar testnet…</p>}
           {tx.state === "err" && <p className="pr-msg err" role="alert">Not recorded: {tx.text}</p>}
           {tx.state === "ok" && <p className="pr-msg ok" role="status">Recorded on testnet. <a href={txLink(tx.hash!)} target="_blank" rel="noreferrer">tx {tx.hash!.slice(0, 10)}… on stellar.expert</a></p>}
@@ -204,4 +206,18 @@ function SplitForm({ id, value, onDone }: { id: number; value: number; onDone: (
       {tx.state === "ok" && <p className="pr-msg ok">Recorded. <a href={txLink(tx.hash!)} target="_blank" rel="noreferrer">tx {tx.hash!.slice(0, 10)}…</a></p>}
     </div>
   );
+}
+
+/** "Use my own RentCast key": stored in sessionStorage only (cleared when the tab closes), sent straight to api.rentcast.io. */
+export function OwnKeyBox({ onChange }: { onChange?: () => void }) {
+  const [has, setHas] = useState(() => Boolean(ownKey.get()));
+  const [open, setOpen] = useState(false);
+  const [v, setV] = useState("");
+  if (has) return <p className="vf-note" data-testid="own-key-set"><span className="vf-pill rentcast">Your RentCast key</span> in use for this tab only. <button className="pr-btn ghost sm" onClick={() => { ownKey.clear(); setHas(false); onChange?.(); }}>Remove key</button></p>;
+  if (!open) return <p className="vf-note"><button className="pr-btn ghost sm" style={{ marginLeft: 0 }} onClick={() => setOpen(true)}>Use my own RentCast key</button></p>;
+  return <div className="vf-row vf-key">
+    <label>RentCast API key<input type="password" autoComplete="off" spellCheck={false} value={v} placeholder="from app.rentcast.io/app/api" onChange={(e) => setV(e.target.value)} /></label>
+    <button className="pr-btn" disabled={v.trim().length < 10} onClick={() => { ownKey.set(v); setV(""); setHas(true); setOpen(false); onChange?.(); }}>Save for this tab</button>
+    <small className="muted">Kept in sessionStorage only and sent directly to api.rentcast.io. Never sent to us or stored on chain.</small>
+  </div>;
 }
