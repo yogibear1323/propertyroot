@@ -18,7 +18,7 @@ function Reveal({ children, className = "", id, label }: { children: React.React
   useEffect(() => {
     const el = r.current;
     if (!el || typeof IntersectionObserver === "undefined") { setOn(true); return; }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setOn(true); io.disconnect(); } }, { threshold: 0.12 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setOn(true); io.disconnect(); } }, { threshold: 0, rootMargin: "0px 0px -40px 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, []);
