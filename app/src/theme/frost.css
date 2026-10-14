@@ -140,3 +140,15 @@ html.frost .la-btn, html.frost .pr-btn:not(.ghost) { background: var(--grad-butt
 html.frost .la-btn:hover { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 0 30px rgba(200, 225, 255, 0.5); }
 html.frost .pr-top nav > a:not(.la-btn) { color: var(--text-2); } html.frost .pr-top nav > a:not(.la-btn):hover { color: var(--text); }
 html.frost .la-hero h1 span { background: linear-gradient(95deg, #ffffff, #c9d8ef 50%, #9cc8f0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Parka yeti photo: small cutout in the corner + a large soft copy blended into the dashboard background (left side,
+   low opacity, masked fades into the navy sky). Static; hidden under prefers-contrast. */
+html.frost .parka-yeti { object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 6px 10px rgba(2, 6, 20, .55));
+  -webkit-mask-image: linear-gradient(180deg, #000 80%, transparent 100%); mask-image: linear-gradient(180deg, #000 80%, transparent 100%); }
+html.frost .wb-yeti { width: 100px; height: 146px; }
+html.frost .wb-yeti-photo { position: absolute; left: max(-40px, -3vw); bottom: 0; width: min(40vw, 600px); height: min(92vh, 900px); pointer-events: none;
+  background: left bottom / contain no-repeat; opacity: 0.15; filter: saturate(0.85) brightness(0.95);
+  -webkit-mask-image: linear-gradient(270deg, transparent 0%, #000 40%), linear-gradient(0deg, transparent 0%, #000 26%); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(270deg, transparent 0%, #000 40%), linear-gradient(0deg, transparent 0%, #000 26%); mask-composite: intersect; }
+@media (max-width: 899px) { html.frost .wb-yeti-photo { width: 92vw; height: 76vh; left: -12vw; opacity: 0.1; } }
+@media (prefers-contrast: more) { html.frost .wb-yeti-photo { display: none; } }
