@@ -45,3 +45,5 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-even
 .la-btn:hover .la-leaf, .la-btn:focus-visible .la-leaf { transform: scale(1.15); }
 .la-btn:hover .la-root { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .la-btn, .la-sprout .la-leaf, .la-sprout .la-root { transition: none !important; } .la-btn:hover, .la-btn:active { transform: none; } .la-sprout .la-leaf { transform: none; } }
+.pr-page a.la-btn, a.la-btn, a.la-btn:visited { color: #fffaf0; }
+.pr-page a.la-ghost { color: #fbf1dc; }
