@@ -152,3 +152,12 @@ html.frost .wb-yeti-photo { position: absolute; left: max(-40px, -3vw); bottom: 
   mask-image: linear-gradient(270deg, transparent 0%, #000 40%), linear-gradient(0deg, transparent 0%, #000 26%); mask-composite: intersect; }
 @media (max-width: 899px) { html.frost .wb-yeti-photo { width: 92vw; height: 76vh; left: -12vw; opacity: 0.1; } }
 @media (prefers-contrast: more) { html.frost .wb-yeti-photo { display: none; } }
+
+/* Homepage sizzle video (right below the hero) */
+.la-sizzle { max-width: 1040px; margin: 28px auto 8px; padding: 0 20px; text-align: center; }
+.la-sizzle-frame { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid rgba(170, 195, 225, 0.35);
+  box-shadow: 0 24px 60px rgba(2, 6, 18, 0.55), 0 0 40px rgba(120, 180, 240, 0.12); background: #0b1428; }
+.la-sizzle video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; cursor: pointer; }
+.la-sizzle-sound { position: absolute; right: 14px; bottom: 14px; padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px;
+  color: #eaf1fa; background: rgba(12, 22, 44, 0.78); border: 1px solid rgba(170, 195, 225, 0.5); cursor: pointer; backdrop-filter: blur(6px); }
+.la-sizzle-sound:hover, .la-sizzle-sound:focus-visible { background: rgba(30, 52, 92, 0.9); outline: 2px solid #9fcaf0; outline-offset: 2px; }
