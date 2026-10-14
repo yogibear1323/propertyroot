@@ -1,0 +1,47 @@
+/* Valuation flow + wallet picker — frost navy */
+.vf{display:grid;gap:14px;margin:4px 0 18px}
+.vf-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.vf-row label{flex:1 1 260px;display:grid;gap:6px}
+.vf input{width:100%}
+.vf-note{font-size:13px;color:var(--haze,#b9c6dc);margin:0}
+.vf-pill{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--glass-border,rgba(220,232,255,.22));background:rgba(220,232,255,.06);color:#e8f0ff;margin-right:6px}
+.vf-pill.off{border-color:rgba(255,200,120,.45);color:#ffd9a8}
+.vf-pill.zillow{border-color:rgba(120,200,255,.5);color:#bfe4ff}
+.vf-pill.manual{border-color:rgba(255,255,255,.35)}
+.vf-card{border:1px solid var(--glass-border,rgba(220,232,255,.18));background:linear-gradient(180deg,rgba(18,30,58,.72),rgba(10,18,38,.72));backdrop-filter:blur(10px);border-radius:14px;padding:16px;display:grid;gap:10px}
+.vf-card.err{border-color:rgba(255,120,120,.45)}
+.vf-card.off{border-color:rgba(255,200,120,.4)}
+.vf-card p{margin:0}
+.vf-base{display:grid;gap:4px}
+.vf-big{font-size:28px;color:#f4f8ff}
+.vf-small{font-size:12px}
+.vf-live{border:1px solid rgba(190,215,255,.28);border-radius:16px;padding:18px;background:radial-gradient(120% 140% at 0 0,rgba(70,110,190,.25),transparent 60%),rgba(10,18,40,.8)}
+.vf-live-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.vf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:0}
+.vf-grid div{display:grid;gap:2px}
+.vf-grid dt{font-size:12px;color:var(--haze,#b9c6dc)}
+.vf-grid dd{margin:0;font-size:17px;color:#f4f8ff}
+.vf-grid small{font-size:11px;color:var(--haze,#9fb0cc)}
+.vf-grid .glow{text-shadow:0 0 14px rgba(170,210,255,.45)}
+.vf-spark{width:120px;height:30px;color:#bfe0ff}
+.vf-seg{display:inline-flex;border:1px solid var(--glass-border,rgba(220,232,255,.22));border-radius:10px;overflow:hidden;width:max-content}
+.vf-seg button{background:none;border:0;color:#cfe0ff;padding:7px 12px;cursor:pointer}
+.vf-seg button.on{background:rgba(190,215,255,.16);color:#fff}
+.pr-btn.sm{padding:4px 10px;font-size:12px;margin-left:8px}
+.wp-scrim{position:fixed;inset:0;background:rgba(4,8,20,.66);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:60;padding:16px}
+.wp-card{width:min(420px,100%);max-height:90vh;overflow:auto;border-radius:18px;padding:20px;border:1px solid rgba(200,220,255,.26);background:linear-gradient(180deg,#14213f,#0b1430);box-shadow:0 30px 80px rgba(0,0,0,.5);display:grid;gap:12px;color:#eaf2ff}
+.wp-head{display:flex;justify-content:space-between;align-items:center}.wp-head h3{margin:0}
+.wp-x{background:none;border:0;color:#cfe0ff;font-size:24px;cursor:pointer}
+.wp-sub,.wp-foot{margin:0;font-size:13px}
+.wp-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wp-item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(200,220,255,.16);background:rgba(255,255,255,.04);color:inherit;cursor:pointer;text-align:left;font:inherit}
+.wp-item:hover:not(:disabled){border-color:rgba(200,225,255,.45);background:rgba(255,255,255,.08)}
+.wp-item.soon{opacity:.6;cursor:default}
+.wp-item img{border-radius:8px}
+.wp-dot{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#2a3a66;font-weight:700}
+.wp-name{flex:1}.wp-name small{opacity:.75;margin-left:6px}
+.wp-tag{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2);opacity:.85}
+.wp-tag.ok{border-color:rgba(130,220,170,.5);color:#bff0d2}
+.vf input{display:block;margin-top:4px;background:hsla(222,42%,9%,.86);color:#eef4ff;border:1px solid hsla(208,45%,72%,.35);border-radius:9px;padding:9px 11px;font:inherit;box-sizing:border-box}
+.vf input:focus{outline:2px solid rgba(170,210,255,.55);outline-offset:1px}
+.vf-base .vf-pill{width:max-content}

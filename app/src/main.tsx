@@ -8,6 +8,7 @@ import FrostBackdrop from "./components/FrostBackdrop";
 // Frost theme (dark navy, snowy mountains), after every other stylesheet.
 import "./theme/frost-auto.css";
 import "./theme/frost.css";
+import "./theme/valuation.css";
 import { WalletProvider } from "./lib/wallet";
 
 // GitHub Pages 404 fallback: /propertyroot/#/app style links → real route.

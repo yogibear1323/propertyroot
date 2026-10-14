@@ -2,6 +2,7 @@ import { Link, Route, Routes } from "react-router-dom";
 import { useWallet } from "./lib/wallet";
 import AccountModal from "./pages/AccountModal";
 import Demo from "./pages/Demo";
+import WalletPicker from "./components/WalletPicker";
 import Landing from "./pages/Landing";
 
 const LOGO = `${import.meta.env.BASE_URL}brand/option-a-roots-house.svg`;
@@ -45,8 +46,9 @@ export default function App() {
         <Route path="/app" element={<><Header app /><main id="main" className="pr-main"><Demo /></main></>} />
         <Route path="*" element={<><Header /><main id="main"><Landing /></main></>} />
       </Routes>
-      {w.error && !w.modalOpen && <div className="pr-banner pr-err" role="alert">{w.error}</div>}
+      {w.error && !w.modalOpen && !w.pickerOpen && <div className="pr-banner pr-err" role="alert">{w.error}</div>}
       {w.modalOpen && <AccountModal />}
+      {w.pickerOpen && <WalletPicker />}
       <footer className="pr-foot">Quasaria PropertyRoot · Stellar testnet demo · unaudited · not legal title · <a href="https://github.com/yogibear1323/propertyroot">source</a></footer>
     </div>
   );

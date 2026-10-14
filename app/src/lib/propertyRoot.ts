@@ -83,3 +83,33 @@ export const fmtUsd = (n: number, d = 0) => `$${n.toLocaleString("en-US", { maxi
 export const fromStroop = (v: bigint | number) => Number(v) / STROOP;
 export const STORE_KEY = "propertyroot.demo.v1";
 export const WAITLIST_KEY = "propertyroot.waitlist.v1";
+
+// ---- Valuation log (record_valuation / record_tokenization) ----
+export type Valuation = { owner: string; address_hash: Uint8Array; value_usd: bigint; source: string; timestamp: bigint };
+export type Tokenization = { valuation_id: bigint; supply: bigint; price_usd: bigint; timestamp: bigint };
+const VL = (dep.contracts as Record<string, string>).valuationLog;
+export const VALUATION_LOG_ID = VL;
+export const recordValuation = (owner: string, sign: Sign, addressHashHex: string, valueUsd: number, source: "zillow" | "manual") =>
+  invokeContract(owner, sign, VL, "record_valuation", [addr(owner), bytes32(addressHashHex), usd7(valueUsd), nativeToScVal(source, { type: "symbol" })]);
+export const recordTokenization = (owner: string, sign: Sign, valuationId: number, supply: number, priceUsd: number) =>
+  invokeContract(owner, sign, VL, "record_tokenization", [addr(owner), u64(valuationId), i128(BigInt(supply)), usd7(priceUsd)]);
+export const readValuation = (id: number) => readContract<Valuation>(VL, "get", [u64(id)]);
+export const readTokenization = (id: number) => readContract<Tokenization | null>(VL, "tokenization", [u64(id)]);
+export const usdFrom7 = (v: bigint) => Number(v) / STROOP;
+
+/** Split a value into whole tokens. Give either `supply` or `price` (USD, cents precision). */
+export function splitTokens(value: number, by: { supply?: number; price?: number }) {
+  const cents = Math.floor(value * 100);
+  if (by.supply !== undefined) {
+    const supply = by.supply;
+    if (!Number.isInteger(supply) || supply < 1) return { error: "Token count must be a whole number of at least 1." } as const;
+    const priceCents = Math.floor(cents / supply);
+    if (priceCents < 1) return { error: "That many tokens would price each below $0.01." } as const;
+    return { supply, price: priceCents / 100, remainder: (cents - priceCents * supply) / 100 } as const;
+  }
+  const p = Math.round((by.price ?? 0) * 100);
+  if (!(p >= 1)) return { error: "Price per token must be at least $0.01." } as const;
+  const supply = Math.floor(cents / p);
+  if (supply < 1) return { error: "Price per token can't be more than the recorded value." } as const;
+  return { supply, price: p / 100, remainder: (cents - supply * p) / 100 } as const;
+}

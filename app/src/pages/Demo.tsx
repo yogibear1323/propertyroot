@@ -1,3 +1,4 @@
+import ValuationFlow from "./Valuation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWallet } from "../lib/wallet";
 import { expertContract } from "../lib/config";
@@ -10,7 +11,7 @@ import "../theme/propertyroot.css";
 
 const BASE = import.meta.env.BASE_URL;
 const LOGO = `${BASE}brand/option-a-roots-house.svg`;
-type Saved = { id?: number; address: string; type: PropertyType; size: number; value?: number; hash?: string; token?: string; owner?: string };
+type Saved = { id?: number; address: string; type: PropertyType; size: number; value?: number; base?: number; hash?: string; token?: string; owner?: string };
 const ls = () => (typeof localStorage === "undefined" ? null : localStorage);
 const load = (): Saved => { try { return { address: "", type: "single-family", size: 1800, ...JSON.parse(ls()?.getItem(STORE_KEY) || "{}") }; } catch { return { address: "", type: "single-family", size: 1800 }; } };
 
@@ -52,7 +53,8 @@ function Demo() {
   const [pos, setPos] = useState<Position | null>(null);
   const [prt, setPrt] = useState<number | null>(null);
   const [amt, setAmt] = useState(100);
-  const appr = useMemo(() => simulateAppraisal(s), [s]);
+  const sim = useMemo(() => simulateAppraisal(s), [s]);
+  const appr = s.base ? { ...sim, value: Math.min(s.base, DEMO_CAP_USD), capped: s.base > DEMO_CAP_USD, titleVerified: s.address.trim().length >= 5 } : sim;
   const unit = TYPES.find((t) => t.id === s.type)?.unit ?? "sqft";
   const mine = s.owner && w.address === s.owner;
   const attested = Boolean(mine && s.id && s.hash);
@@ -96,10 +98,10 @@ function Demo() {
     <div className="pr-demo" id="demo">
       <div className="pr-wallet">
         {w.address ? (
-          <span>Connected <b className="mono">{w.address.slice(0, 5)}…{w.address.slice(-4)}</b> on testnet{w.wrongNetwork ? " · switch Freighter to Testnet" : ""}</span>
+          <><span>Connected <b className="mono">{w.address.slice(0, 5)}…{w.address.slice(-4)}</b>{w.walletId ? ` via ${w.walletId}` : ""} on testnet{w.wrongNetwork ? " · switch your wallet to Testnet" : ""}</span><button className="pr-btn ghost sm" onClick={() => w.connect()}>Switch</button><button className="pr-btn ghost sm" onClick={() => w.disconnect()}>Disconnect</button></>
         ) : (
           <>
-            <button className="pr-btn" onClick={() => w.connect()} disabled={w.connecting}>{w.available ? "Connect Freighter" : "Connect wallet"}</button>
+            <button className="pr-btn" onClick={() => w.connect()} disabled={w.connecting}>Connect wallet</button>
             <button className="pr-btn ghost" onClick={() => w.openModal()}>Use a testnet key instead</button>
             <span className="muted">Needs a testnet account with a little XLM for fees (fund it free with Friendbot).</span>
           </>
@@ -109,13 +111,14 @@ function Demo() {
       <div className="pr-steps">
         <Step n={1} title="Appraise & verify (simulated)" done={attested} active={!attested}>
           <p className="pr-sim">Simulated: no real appraiser, title search or KYC happens. Your own wallet signs a demo appraisal, flagged <code>simulated</code> on-chain.</p>
+          <ValuationFlow onRecorded={(v) => setS((o) => ({ ...o, address: v.address, base: v.value }))} />
           <div className="pr-form">
             <label>Property address<input value={s.address} placeholder="123 Mesa Verde Rd, Sedona AZ" onChange={(e) => setS({ ...s, address: e.target.value })} disabled={attested} /></label>
             <label>Type<select value={s.type} onChange={(e) => setS({ ...s, type: e.target.value as PropertyType })} disabled={attested}>{TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
             <label>Size ({unit})<input type="number" min={1} value={s.size} onChange={(e) => setS({ ...s, size: Number(e.target.value) })} disabled={attested} /></label>
           </div>
           <div className="pr-appraisal">
-            <div><span>Simulated appraisal</span><b className="mono">{fmtUsd(s.value ?? appr.value)}</b>{appr.capped && <small>capped at the {fmtUsd(DEMO_CAP_USD)} demo limit</small>}</div>
+            <div><span>{s.base ? "Recorded base value" : "Simulated appraisal"}</span><b className="mono">{fmtUsd(s.value ?? appr.value)}</b>{appr.capped && <small>capped at the {fmtUsd(DEMO_CAP_USD)} demo limit</small>}</div>
             <div><span>Title check (simulated)</span><b>{appr.titleVerified ? "✓ verified" : "needs an address"}</b></div>
             <div><span>KYC (simulated)</span><b>✓ verified</b></div>
           </div>

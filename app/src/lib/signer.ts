@@ -7,7 +7,7 @@ import { Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 import { signTransaction as freighterSign } from "@stellar/freighter-api";
 
 export interface Signer {
-  readonly kind: "freighter" | "local";
+  readonly kind: "freighter" | "local" | "kit";
   readonly address: string;
   /** Returns the signed transaction envelope XDR. */
   signTransaction(xdr: string): Promise<string>;
