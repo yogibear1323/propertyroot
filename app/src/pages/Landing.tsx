@@ -1,3 +1,4 @@
+import SizzleVideo from "../components/SizzleVideo";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LaunchApp } from "../App";
@@ -95,6 +96,7 @@ export default function Landing() {
           <p className="la-fine">Demo only · unaudited · not legal title</p>
         </div>
       </section>
+      <SizzleVideo />
 
       <Reveal label="What PropertyRoot is" className="la-what">
         <h2>Real estate value, put to work</h2>
