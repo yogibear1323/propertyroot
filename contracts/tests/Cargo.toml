@@ -1,0 +1,20 @@
+[package]
+name = "propertyroot-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+propertyroot-attestation-registry = { path = "../attestation-registry" }
+propertyroot-property-token = { path = "../property-token" }
+propertyroot-property-vault = { path = "../property-vault" }
+propertyroot-blend-adapter = { path = "../blend-adapter" }
+propertyroot-mocks = { path = "../mocks" }

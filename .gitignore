@@ -1,0 +1,6 @@
+target/
+.env
+*.secret
+node_modules/
+.stellar/
+test_snapshots/

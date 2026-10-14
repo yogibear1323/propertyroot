@@ -1,0 +1,28 @@
+✅ Key saved with alias pr-e2e-owner-1791940205 in "/home/box/.config/stellar/identity/pr-e2e-owner-1791940205.toml"
+✅ Account pr-e2e-owner-1791940205 funded on "Test SDF Network ; September 2015"
+owner GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ  property_id 1  appraisal_hash 19300fc5e509bc3ca7ddc562e3fdfc3539be8d276b29fe7575ad3aaf5c687755
+== 1. appraise & verify (appraiser key signs; simulated title/KYC)
+1
+{"appraisal_hash":"19300fc5e509bc3ca7ddc562e3fdfc3539be8d276b29fe7575ad3aaf5c687755","kyc_verified":true,"owner":"GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ","simulated":false,"timestamp":1791940222,"title_verified":true,"value_usd":"3500000000000","version":1}
+== 2. tokenize (50% LTV -> 175,000 pRT)
+token CA4GJYI6DYE6IN7KYFEDX4FYUXZ4KZ7YZJKGKLHCYEBYSHBIGBK5RKRZ
+"pRT-1"
+"1750000000000"
+== Reflector XLM/USD
+["19087102040080",14,1791939900]
+== 3. put 200 pRT to work in Blend
+"10496978643"
+{"asset":"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC","b_rate":"2328007529807","b_tokens":"4508996860","pool":"CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF","principal":"10496978643","share_price":"9999999","total_shares":"10496978643","total_value":"10496978641"}
+{"accrued_yield_xlm":"0","property":{"att_version":1,"minted":"1750000000000","over_cap":"0","owner":"GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ","principal_xlm":"10496978643","prt_working":"2000000000","shares":"10496978643","token":"CA4GJYI6DYE6IN7KYFEDX4FYUXZ4KZ7YZJKGKLHCYEBYSHBIGBK5RKRZ","value_usd":"3500000000000","yield_paid_xlm":"0"},"share_price":"9999999","value_xlm":"10496978641"}
+== wait 90s for Blend interest to accrue
+{"accrued_yield_xlm":"57925","property":{"att_version":1,"minted":"1750000000000","over_cap":"0","owner":"GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ","principal_xlm":"10496978643","prt_working":"2000000000","shares":"10496978643","token":"CA4GJYI6DYE6IN7KYFEDX4FYUXZ4KZ7YZJKGKLHCYEBYSHBIGBK5RKRZ","value_usd":"3500000000000","yield_paid_xlm":"0"},"share_price":"10000055","value_xlm":"10497036568"}
+== withdraw (principal -> reserve, interest -> owner, pRT back)
+"60973"
+"1750000000000"
+{"att_version":1,"minted":"1750000000000","over_cap":"0","owner":"GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ","principal_xlm":"0","prt_working":"0","shares":"0","token":"CA4GJYI6DYE6IN7KYFEDX4FYUXZ4KZ7YZJKGKLHCYEBYSHBIGBK5RKRZ","value_usd":"3500000000000","yield_paid_xlm":"60973"}
+== also: simulated self-attestation path used by the web demo
+1
+"CANKL4MRFFQZDNR77KBW437QITIDQ6NIGLOJFOWKUKGU2SDHHNIDV5MS"
+"2624244660"
+{"accrued_yield_xlm":"0","property":{"att_version":1,"minted":"1250000000000","over_cap":"0","owner":"GA5YGJI6HHOXXV7ZTEL4PRGR25QRELNVED6JYDQEBZZ2HJOMARZMH7PZ","principal_xlm":"2624244660","prt_working":"500000000","shares":"2624244660","token":"CANKL4MRFFQZDNR77KBW437QITIDQ6NIGLOJFOWKUKGU2SDHHNIDV5MS","value_usd":"2500000000000","yield_paid_xlm":"0"},"share_price":"9999999","value_xlm":"2624244659"}
+E2E OK
