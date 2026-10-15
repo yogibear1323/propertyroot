@@ -11,6 +11,7 @@ import { readBlendXlmRate } from "../lib/blendRate";
 import { rentcast, ownKey, proxyConfigured } from "../lib/valuation";
 import { OwnKeyBox } from "./Valuation";
 import { HORIZON_URL } from "../lib/config";
+import TokenizationFlow from "./Tokenization";
 
 type Row = { id: number; v: Valuation; t: Tokenization | null; legacy?: boolean };
 const short = (a: string, n = 5) => `${a.slice(0, n)}…${a.slice(-4)}`;
@@ -23,13 +24,14 @@ const I = {
   reg: "M4 4h16v4H4zm0 6h16v4H4zm0 6h16v4H4z",
   rec: "M12 2 3 7v10l9 5 9-5V7zm0 2.3L18.7 8 12 11.7 5.3 8z",
   tok: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m1 15h-2v-2h2zm0-4h-2V7h2z",
+  flow: "M4 5h5v5H4zm11 0h5v5h-5zM9.5 7.5h5.5M7 10v4a2 2 0 0 0 2 2h6m0 0-2-2m2 2-2 2m-9 3h5v-5H4z",
   wal: "M3 6h15a3 3 0 0 1 3 3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm13 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M3 6l12-3v3",
   set: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m9 4-2.2-.7.5-2.2-1.9-1.1-1.6 1.6-2-1L13 4h-2l-.8 2.6-2 1-1.6-1.6-1.9 1.1.5 2.2L3 12l2.2.7-.5 2.2 1.9 1.1 1.6-1.6 2 1L11 20h2l.8-2.6 2-1 1.6 1.6 1.9-1.1-.5-2.2z",
 };
 const Ico = ({ d }: { d: string }) => <svg className="bo-ico" viewBox="0 0 24 24" aria-hidden><path d={d} fill="currentColor" /></svg>;
 const NAV = [
   { to: "", label: "Dashboard", d: I.dash }, { to: "registry", label: "Property registry", d: I.reg }, { to: "records", label: "On-chain records", d: I.rec },
-  { to: "tokens", label: "Tokenized assets", d: I.tok }, { to: "wallets", label: "Wallet connections", d: I.wal }, { to: "settings", label: "Settings", d: I.set },
+  { to: "tokens", label: "Tokenized assets", d: I.tok }, { to: "tokenization", label: "Tokenization flow", d: I.flow }, { to: "wallets", label: "Wallet connections", d: I.wal }, { to: "settings", label: "Settings", d: I.set },
 ];
 
 function QLogo() {
@@ -166,6 +168,7 @@ export default function Admin() {
         <Route path="registry" element={<Registry q={q} />} />
         <Route path="records" element={<Records />} />
         <Route path="tokens" element={<Tokens q={q} />} />
+        <Route path="tokenization" element={<TokenizationFlow />} />
         <Route path="wallets" element={<Wallets />} />
         <Route path="settings" element={<Settings />} />
       </Routes>

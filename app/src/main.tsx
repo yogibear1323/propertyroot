@@ -10,6 +10,7 @@ import "./theme/frost-auto.css";
 import "./theme/frost.css";
 import "./theme/valuation.css";
 import "./theme/admin.css";
+import "./theme/tokenization.css";
 import { WalletProvider } from "./lib/wallet";
 
 // GitHub Pages 404 fallback: /propertyroot/#/app style links → real route.
